@@ -8,7 +8,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/{{ github.event.repository.name | toLowerCase }}
+  IMAGE_NAME: ${{ github.repository_owner }}/${{ github.event.repository.name | toLowerCase }}
+
 
 jobs:
   test:
