@@ -28,8 +28,9 @@ COPY src/predict.py /app/src/predict.py
 COPY models/predict_future_sales_xgb.joblib /app/models/
 
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
 # По умолчанию запускаем API
-EXPOSE 5000
+ENV PORT 8080
 
-CMD ["uvicorn", "src.predict:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["python", "src/predict.py"]
