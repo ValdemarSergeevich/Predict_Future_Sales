@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: valdemarsergeevich/predict_future_sales
 
 jobs:
   test:
@@ -93,7 +93,7 @@ jobs:
       uses: appleboy/ssh-action@v1.0.3
       env:
         GOOGLE_DRIVE_FILE_ID: ${{ secrets.GOOGLE_DRIVE_FILE_ID }}
-        IMAGE_NAME_LC: ${{ github.repository }}
+        IMAGE_NAME_LC: valdemarsergeevich/predict_future_sales
       with:
         host: ${{ secrets.DEPLOY_HOST }}
         username: ${{ secrets.DEPLOY_USER }}
