@@ -56,14 +56,12 @@ jobs:
         name: data-csv
         path: data/
 
-    # 🔥 Добавлено: перемещаем CSV в корень репо, чтобы Docker видел его
     - name: Move CSV into build context
-      run: |
-        cp data/df_final1.csv ./df_final1.csv
+      run: cp data/df_final1.csv ./df_final1.csv
 
-    # 🔥 Добавлено: проверяем, что файл действительно есть
     - name: Debug CSV presence
       run: ls -l .
+
 
     # Авторизация в Google Cloud
     - id: 'auth'
