@@ -6,7 +6,7 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: europe-west3 # Укажи тот же, что в Artifact Registry
+  REGION: europe-west3
   SERVICE_NAME: predict-sales-api
   REPO_NAME: sales-repo
 
@@ -15,24 +15,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11.5'
         cache: 'pip'
+
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
         pip install pytest
+
     - name: Download Data
       env:
         GOOGLE_DRIVE_FILE_ID: ${{ secrets.GOOGLE_DRIVE_FILE_ID }}
       run: |
         mkdir -p data
         curl -L -o data/df_final1.csv "https://drive.google.com/uc?export=download&id=${GOOGLE_DRIVE_FILE_ID}"
+
     - name: Run tests
       run: |
         if [ -d "tests" ]; then python -m pytest tests/; fi
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
@@ -51,24 +56,30 @@ jobs:
         name: data-csv
         path: data/
 
+    # 🔥 Добавлено: перемещаем CSV в корень репо, чтобы Docker видел его
+    - name: Move CSV into build context
+      run: |
+        cp data/df_final1.csv ./df_final1.csv
+
+    # 🔥 Добавлено: проверяем, что файл действительно есть
+    - name: Debug CSV presence
+      run: ls -l .
+
     # Авторизация в Google Cloud
     - id: 'auth'
       uses: 'google-github-actions/auth@v2'
       with:
         credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-    # Настройка Docker для работы с Google Registry
     - name: Configure Docker
       run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
 
-    # Сборка и Пуш образа
     - name: Build and Push
       run: |
         IMAGE_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
         docker build -t $IMAGE_TAG .
         docker push $IMAGE_TAG
 
-    # ДЕПЛОЙ В CLOUD RUN
     - name: Deploy to Cloud Run
       id: deploy
       uses: google-github-actions/deploy-cloudrun@v2
