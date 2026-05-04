@@ -20,6 +20,7 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
@@ -57,6 +58,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      image_lc: ${{ steps.norm.outputs.IMAGE_NAME_LC }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -96,29 +99,29 @@ jobs:
       uses: appleboy/ssh-action@v1.0.3
       env:
         GOOGLE_DRIVE_FILE_ID: ${{ secrets.GOOGLE_DRIVE_FILE_ID }}
-        IMAGE_NAME_LC: valdemarsergeevich/predict_future_sales
+        IMAGE_LOWER: ${{ needs.build-and-push.outputs.image_lc }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         host: ${{ secrets.DEPLOY_HOST }}
         username: ${{ secrets.DEPLOY_USER }}
         key: ${{ secrets.DEPLOY_SSH_KEY }}
-        envs: GOOGLE_DRIVE_FILE_ID, IMAGE_NAME_LC
+        envs: GOOGLE_DRIVE_FILE_ID, IMAGE_LOWER, GH_TOKEN
         script: |
           set -e
-          IMAGE_LOWER=$(echo $IMAGE_NAME_LC | tr '[:upper:]' '[:lower:]')
           
           echo "Logging in to GHCR..."
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          [cite_start]echo "$GH_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin [cite: 9]
 
           echo "Pulling latest image..."
-          docker pull ghcr.io/$IMAGE_LOWER:latest
+          [cite_start]docker pull ghcr.io/$IMAGE_LOWER:latest [cite: 13]
 
           echo "Preparing data directory..."
           mkdir -p /app/data
 
           echo "Downloading CSV from Google Drive..."
-          curl -L -o /app/data/df_final1.csv "https://drive.google.com/uc?export=download&id=${GOOGLE_DRIVE_FILE_ID}"
+          [cite_start]curl -L -o /app/data/df_final1.csv "https://drive.google.com/uc?export=download&id=${GOOGLE_DRIVE_FILE_ID}" [cite: 13]
 
           echo "Restarting application..."
           cd /app
-          docker compose down --remove-orphans || true
+          [cite_start]docker compose down --remove-orphans || true [cite: 16, 17]
           docker compose up -d
