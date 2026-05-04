@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  prediction-api:
+    image: ghcr.io/USERNAME/REPOSITORY:latest
+    container_name: prediction-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - /app/data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/status"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

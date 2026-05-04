@@ -1,0 +1,10 @@
+pydantic == 2.13.2
+pandas == 2.3.3
+scikit-learn == 1.8.0
+catboost == 1.2.10
+xgboost == 3.2.0
+lightgbm == 4.6.0
+fastapi == 0.136.0
+joblib == 1.5.3
+uvicorn == 0.44.0
+dill == 0.4.1
