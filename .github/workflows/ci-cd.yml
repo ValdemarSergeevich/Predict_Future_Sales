@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: valdemarsergeevich/predict_future_sales
@@ -16,7 +20,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
@@ -101,9 +104,8 @@ jobs:
         envs: GOOGLE_DRIVE_FILE_ID, IMAGE_NAME_LC
         script: |
           set -e
-          
           IMAGE_LOWER=$(echo $IMAGE_NAME_LC | tr '[:upper:]' '[:lower:]')
-
+          
           echo "Logging in to GHCR..."
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
