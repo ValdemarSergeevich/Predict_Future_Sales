@@ -25,20 +25,19 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip [cite: 3]
-        pip install -r requirements.txt [cite: 3]
-        pip install pytest pytest-cov [cite: 3]
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
 
     - name: Download CSV from Google Drive
       env:
         GOOGLE_DRIVE_FILE_ID: ${{ secrets.GOOGLE_DRIVE_FILE_ID }}
       run: |
-        mkdir -p data [cite: 4]
-        curl -L -o data/df_final1.csv "https://drive.google.com/uc?export=download&id=${GOOGLE_DRIVE_FILE_ID}" [cite: 4]
+        mkdir -p data
+        curl -L -o data/df_final1.csv "https://drive.google.com/uc?export=download&id=${GOOGLE_DRIVE_FILE_ID}"
 
     - name: Run tests
       run: |
-        # [FIX] Убрано "|| echo", чтобы падение тестов ПРЕРЫВАЛО пайплайн (тесты должны работать) 
         if [ -d "tests" ]; then
           python -m pytest tests/
         else
@@ -57,7 +56,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
     - name: Checkout repository
-      [cite_start]uses: actions/checkout@v4
+      uses: actions/checkout@v4
 
     - name: Download data artifact
       uses: actions/download-artifact@v4
@@ -70,20 +69,20 @@ jobs:
       run: echo "IMAGE_NAME_LC=$(echo '${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
     - name: Log in to Container Registry
-      [cite_start]uses: docker/login-action@v3 
+      uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    
+
     - name: Build and push Docker image
-      [cite_start]uses: docker/build-push-action@v5 
+      uses: docker/build-push-action@v5
       with:
         context: .
-        [cite_start]push: true [cite: 10]
+        push: true
         tags: |
-          ${{ env.REGISTRY }}/${{ steps.norm.outputs.IMAGE_NAME_LC }}:latest [cite: 11]
-          ${{ env.REGISTRY }}/${{ steps.norm.outputs.IMAGE_NAME_LC }}:${{ github.sha }} [cite: 11]
+          ${{ env.REGISTRY }}/${{ steps.norm.outputs.IMAGE_NAME_LC }}:latest
+          ${{ env.REGISTRY }}/${{ steps.norm.outputs.IMAGE_NAME_LC }}:${{ github.sha }}
 
   deploy:
     needs: build-and-push
@@ -91,36 +90,33 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
     - name: Deploy to server
-      [cite_start]uses: appleboy/ssh-action@v1.0.3 
+      uses: appleboy/ssh-action@v1.0.3
       env:
         GOOGLE_DRIVE_FILE_ID: ${{ secrets.GOOGLE_DRIVE_FILE_ID }}
         IMAGE_NAME_LC: ${{ github.repository }}
       with:
-        [cite_start]host: ${{ secrets.DEPLOY_HOST }} [cite: 12]
-        [cite_start]username: ${{ secrets.DEPLOY_USER }} [cite: 12]
-        [cite_start]key: ${{ secrets.DEPLOY_SSH_KEY }} [cite: 12]
+        host: ${{ secrets.DEPLOY_HOST }}
+        username: ${{ secrets.DEPLOY_USER }}
+        key: ${{ secrets.DEPLOY_SSH_KEY }}
         envs: GOOGLE_DRIVE_FILE_ID, IMAGE_NAME_LC
         script: |
-          set -e 
+          set -e
           
-          # [FIX] Нормализуем имя образа прямо здесь, иначе pull упадет из-за больших букв
           IMAGE_LOWER=$(echo $IMAGE_NAME_LC | tr '[:upper:]' '[:lower:]')
 
           echo "Logging in to GHCR..."
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
           echo "Pulling latest image..."
-          # [FIX] Используем исправленную переменную IMAGE_LOWER
-          [cite_start]docker pull ghcr.io/$IMAGE_LOWER:latest [cite: 13]
+          docker pull ghcr.io/$IMAGE_LOWER:latest
 
           echo "Preparing data directory..."
-          [cite_start]mkdir -p /app/data [cite: 13]
+          mkdir -p /app/data
 
           echo "Downloading CSV from Google Drive..."
-          [cite_start]curl -L -o /app/data/df_final1.csv "https://drive.google.com/uc?export=download&id=${GOOGLE_DRIVE_FILE_ID}" [cite: 13]
+          curl -L -o /app/data/df_final1.csv "https://drive.google.com/uc?export=download&id=${GOOGLE_DRIVE_FILE_ID}"
 
           echo "Restarting application..."
           cd /app
-          # [FIX] Оптимизированный перезапуск: удаляем лишнее и поднимаем заново
-          [cite_start]docker compose down --remove-orphans || true [cite: 17]
-          [cite_start]docker compose up -d [cite: 17]
+          docker compose down --remove-orphans || true
+          docker compose up -d
