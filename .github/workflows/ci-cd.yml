@@ -8,8 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/$(echo ${{ github.event.repository.name }} | tr '[:upper:]' '[:lower:]')
-
+  IMAGE_NAME: ${{ github.repository_owner }}/{{ github.event.repository.name | toLowerCase }}
 
 jobs:
   test:
@@ -35,12 +34,10 @@ jobs:
         GOOGLE_DRIVE_FILE_ID: ${{ secrets.GOOGLE_DRIVE_FILE_ID }}
       run: |
         mkdir -p data
-        # Скачивание файла из Google Drive
         curl -L -o data/df_final1.csv "https://drive.google.com/uc?export=download&id=${GOOGLE_DRIVE_FILE_ID}"
     
     - name: Run tests
       run: |
-        # Здесь можно добавить тесты
         python -m pytest tests/ || echo "No tests found, skipping..."
     
     - name: Verify data file
@@ -52,6 +49,7 @@ jobs:
           echo "ERROR: CSV file not found"
           exit 1
         fi
+
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
@@ -71,8 +69,6 @@ jobs:
     - name: Copy model file (if stored in artifacts)
       run: |
         mkdir -p models
-        # Если модель хранится локально, она будет скопирована автоматически
-        # Или можно скачать из другого источника
     
     - name: Log in to Container Registry
       uses: docker/login-action@v2
