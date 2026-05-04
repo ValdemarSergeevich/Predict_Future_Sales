@@ -2,6 +2,8 @@ import joblib
 import pandas as pd
 import uvicorn
 
+import os
+
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -65,9 +67,18 @@ class Prediction(BaseModel):
 # ---------------------------------------------------------
 # 5. Healthcheck
 # ---------------------------------------------------------
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to Sales Prediction API. Use /status or /predict"}
+
 @app.get("/status")
 def status():
-    return {"status": "ok"}
+    # Добавим в статус проверку загрузки, чтобы видеть проблему в логах
+    return {
+        "status": "ok",
+        "model_loaded": model is not None,
+        "data_loaded": not df.empty
+    }
 
 # ---------------------------------------------------------
 # 6. Основной эндпоинт
@@ -120,4 +131,5 @@ def predict(form: Form):
 # 7. Запуск (без reload — важно для Docker)
 # ---------------------------------------------------------
 if __name__ == "__main__":
-    uvicorn.run("src.predict:app", host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run("src.predict:app", host="0.0.0.0", port=port)
